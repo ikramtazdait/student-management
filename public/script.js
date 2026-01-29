@@ -2,6 +2,7 @@ let students = [];
 let editingId = null;
 
 const API_URL = 'http://localhost:3000/api/students';
+const AUTH_API_URL = 'http://localhost:3000/api/auth';
 
 // DOM Elements
 const studentForm = document.getElementById('studentForm');
@@ -15,12 +16,49 @@ const statusInput = document.getElementById('status');
 const tableBody = document.getElementById('tableBody');
 const searchInput = document.getElementById('searchInput');
 const cancelBtn = document.getElementById('cancelBtn');
+const userNameElement = document.getElementById('userName');
+const logoutBtn = document.getElementById('logoutBtn');
 
-// Set today's date as default
+// Check authentication on page load
 document.addEventListener('DOMContentLoaded', () => {
+  checkAuthentication();
   const today = new Date().toISOString().split('T')[0];
   enrollmentDateInput.value = today;
-  loadStudents();
+});
+
+// Check if user is authenticated
+async function checkAuthentication() {
+  try {
+    const response = await fetch(`${AUTH_API_URL}/status`);
+    const data = await response.json();
+
+    if (!data.authenticated) {
+      window.location.href = '/';
+      return;
+    }
+
+    userNameElement.textContent = data.username || 'User';
+    loadStudents();
+  } catch (error) {
+    console.error('Error checking authentication:', error);
+    window.location.href = '/';
+  }
+}
+
+// Logout functionality
+logoutBtn.addEventListener('click', async () => {
+  try {
+    const response = await fetch(`${AUTH_API_URL}/logout`, {
+      method: 'POST'
+    });
+
+    if (response.ok) {
+      window.location.href = '/';
+    }
+  } catch (error) {
+    console.error('Error during logout:', error);
+    showAlert('Failed to logout', 'error');
+  }
 });
 
 // Form submission

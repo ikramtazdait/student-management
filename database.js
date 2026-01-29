@@ -1,5 +1,6 @@
 const sqlite3 = require('sqlite3').verbose();
 const path = require('path');
+const bcrypt = require('bcryptjs');
 
 const dbPath = path.join(__dirname, 'students.db');
 
@@ -14,6 +15,23 @@ const db = new sqlite3.Database(dbPath, (err) => {
 });
 
 function initializeDatabase() {
+  // Create users table
+  db.run(`
+    CREATE TABLE IF NOT EXISTS users (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      username TEXT NOT NULL UNIQUE,
+      email TEXT NOT NULL UNIQUE,
+      password TEXT NOT NULL,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP
+    )
+  `, (err) => {
+    if (err) {
+      console.error('Error creating users table:', err.message);
+    } else {
+      console.log('Users table initialized');
+    }
+  });
+
   // Create students table if it doesn't exist
   db.run(`
     CREATE TABLE IF NOT EXISTS students (
@@ -79,11 +97,51 @@ function deleteStudent(id, callback) {
   });
 }
 
+// Register user
+function registerUser(username, email, password, callback) {
+  const hashedPassword = bcrypt.hashSync(password, 10);
+  
+  db.run(
+    `INSERT INTO users (username, email, password) VALUES (?, ?, ?)`,
+    [username, email, hashedPassword],
+    function(err) {
+      if (err) {
+        callback(err, null);
+      } else {
+        callback(null, this.lastID);
+      }
+    }
+  );
+}
+
+// Get user by username
+function getUserByUsername(username, callback) {
+  db.get('SELECT * FROM users WHERE username = ?', [username], (err, row) => {
+    callback(err, row);
+  });
+}
+
+// Get user by email
+function getUserByEmail(email, callback) {
+  db.get('SELECT * FROM users WHERE email = ?', [email], (err, row) => {
+    callback(err, row);
+  });
+}
+
+// Verify user password
+function verifyPassword(password, hashedPassword) {
+  return bcrypt.compareSync(password, hashedPassword);
+}
+
 module.exports = {
   db,
   getAllStudents,
   getStudentById,
   addStudent,
   updateStudent,
-  deleteStudent
+  deleteStudent,
+  registerUser,
+  getUserByUsername,
+  getUserByEmail,
+  verifyPassword
 };
