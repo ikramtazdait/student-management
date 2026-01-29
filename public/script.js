@@ -1,8 +1,14 @@
 let students = [];
 let editingId = null;
 
-const API_URL = 'http://localhost:3000/api/students';
-const AUTH_API_URL = 'http://localhost:3000/api/auth';
+// Dynamic API URL - works for both local and Vercel deployment
+const API_URL = typeof window !== 'undefined' && window.location.hostname === 'localhost' 
+  ? 'http://localhost:3000/api/students'
+  : `${window.location.origin}/api/students`;
+
+const AUTH_API_URL = typeof window !== 'undefined' && window.location.hostname === 'localhost' 
+  ? 'http://localhost:3000/api/auth'
+  : `${window.location.origin}/api/auth`;
 
 // DOM Elements
 const studentForm = document.getElementById('studentForm');

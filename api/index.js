@@ -1,9 +1,9 @@
 const express = require('express');
 const cors = require('cors');
 const bodyParser = require('body-parser');
-const path = require('path');
 const session = require('express-session');
 const cookieParser = require('cookie-parser');
+const path = require('path');
 const {
   getAllStudents,
   getStudentById,
@@ -14,10 +14,9 @@ const {
   getUserByUsername,
   getUserByEmail,
   verifyPassword
-} = require('./database');
+} = require('../database');
 
 const app = express();
-const PORT = process.env.PORT || 3000;
 
 // Middleware
 app.use(cookieParser());
@@ -33,12 +32,11 @@ app.use(session({
   }
 }));
 app.use(cors({
-  origin: process.env.FRONTEND_URL || '*',
+  origin: process.env.FRONTEND_URL || 'http://localhost:3000',
   credentials: true
 }));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
-app.use(express.static(path.join(__dirname, 'public')));
 
 // Authentication middleware
 function isAuthenticated(req, res, next) {
@@ -48,6 +46,8 @@ function isAuthenticated(req, res, next) {
     res.status(401).json({ error: 'Not authenticated' });
   }
 }
+
+// ===== AUTHENTICATION ROUTES =====
 
 // Check authentication status
 app.get('/api/auth/status', (req, res) => {
@@ -164,7 +164,7 @@ app.post('/api/auth/logout', (req, res) => {
   });
 });
 
-// Routes for API (Protected)
+// ===== STUDENT MANAGEMENT ROUTES (Protected) =====
 
 // Get all students
 app.get('/api/students', isAuthenticated, (req, res) => {
@@ -263,21 +263,5 @@ app.delete('/api/students/:id', isAuthenticated, (req, res) => {
     res.json({ message: 'Student deleted successfully' });
   });
 });
-
-// Serve the frontend
-app.get('/', (req, res) => {
-  if (req.session.userId) {
-    res.sendFile(path.join(__dirname, 'public', 'index.html'));
-  } else {
-    res.sendFile(path.join(__dirname, 'public', 'login.html'));
-  }
-});
-
-// Start server (only for local development)
-if (require.main === module) {
-  app.listen(PORT, () => {
-    console.log(`Server is running on http://localhost:${PORT}`);
-  });
-}
 
 module.exports = app;

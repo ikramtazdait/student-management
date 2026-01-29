@@ -1,4 +1,7 @@
-const API_URL = 'http://localhost:3000/api/auth';
+// Dynamic API URL - works for both local and Vercel deployment
+const API_URL = typeof window !== 'undefined' && window.location.hostname === 'localhost' 
+  ? 'http://localhost:3000/api/auth'
+  : `${window.location.origin}/api/auth`;
 
 // DOM Elements
 const loginForm = document.getElementById('loginFormElement');
